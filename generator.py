@@ -100,7 +100,14 @@ Rules:
 Question: {question}
 """
 
-    client = ollama.Client(host=OLLAMA_HOST) if OLLAMA_HOST else ollama.Client()
+    client = (
+    ollama.Client(
+        host=OLLAMA_HOST,
+        headers={"ngrok-skip-browser-warning": "true"}
+    )
+    if OLLAMA_HOST
+    else ollama.Client()
+)
 
     response = client.generate(
         model=MODEL_NAME,
