@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Self-Correcting Reasoning System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="page-shell">
+  <div class="hero-glow hero-glow-left"></div>
+  <div class="hero-glow hero-glow-right"></div>
+
+  <main class="container">
+    <div class="topbar">
+      <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
+    </div>
+
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">LLM Reasoning </p>
+        <h1>Self-Correcting Reasoning System</h1>
+        <p class="hero-text">
+          Generate multiple reasoning paths, score them with a self-critic,
+          and surface the strongest final answer in one clean workflow.
+        </p>
+      </div>
+
+      <div class="hero-panel">
+        <div class="stat-card">
+          <span class="stat-label">Model</span>
+          <strong>{{ model_label }}</strong>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Mode</span>
+          <strong>Generate + Critique + Select</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="query-panel">
+      <form method="post" class="query-form" id="queryForm">
+        <label for="question">Ask a reasoning question</label>
+        <p class="form-note">Each time you run the model, you will need to log in again.</p>
+        <div class="form-toolbar">
+          <label for="answer_mode" class="mode-label">Answer Style</label>
+          <select id="answer_mode" name="answer_mode" class="mode-select">
+            <option value="fast" {% if answer_mode == 'fast' %}selected{% endif %}>Fast</option>
+            <option value="detailed" {% if answer_mode == 'detailed' %}selected{% endif %}>Detailed</option>
+          </select>
+        </div>
+        <div class="input-row">
+          <textarea id="question" name="question" placeholder="Example: If a train travels 60 km in 1.5 hours, what is its average speed?" required>{{ question or '' }}</textarea>
+          <button type="submit" id="submitButton">Analyze</button>
+        </div>
+      </form>
+
+      {% if error %}
+      <div class="message error">{{ error }}</div>
+      {% endif %}
+
+      {% if metrics %}
+      <div class="metrics">
+        <div class="metric">
+          <span>Reasoning Paths</span>
+          <strong>{{ metrics.path_count }}</strong>
+        </div>
+        <div class="metric">
+          <span>Response Time</span>
+          <strong>{{ metrics.elapsed_seconds }}s</strong>
+        </div>
+        <div class="metric">
+          <span>Answer Style</span>
+          <strong>{{ metrics.answer_mode }}</strong>
+        </div>
+      </div>
+      {% endif %}
+    </section>
+
+    {% if best %}
+    <section class="best-answer-section">
+      <div class="section-header">
+        <p class="eyebrow">Best Result</p>
+        <h2>Top Reasoning Path</h2>
+      </div>
+
+      <article class="card best-card">
+        <div class="card-top">
+          <span class="badge success">Selected Answer</span>
+          <span class="score-pill">Score {{ "%.1f"|format(best.score) }}/10</span>
+        </div>
+        <p class="card-summary">{{ best.summary }}</p>
+        <pre class="reasoning-text">{{ best.reasoning }}</pre>
+      </article>
+    </section>
+    {% endif %}
+
+    {% if results %}
+    <section class="results-section">
+      <div class="section-header">
+        <p class="eyebrow">Full Comparison</p>
+        <h2>Generated Reasoning Paths</h2>
+      </div>
+
+      <div class="results-grid">
+        {% for r in results %}
+        <article class="card reasoning-card {% if best and r.id == best.id %}is-best{% endif %}">
+          <div class="card-top">
+            <span class="badge">Path {{ r.id }}</span>
+            <span class="score-pill">Score {{ "%.1f"|format(r.score) }}/10</span>
+          </div>
+          <p class="card-summary">{{ r.summary }}</p>
+          <pre class="reasoning-text">{{ r.reasoning }}</pre>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+  </main>
+</div>
+<script>
+const form = document.getElementById("queryForm");
+const button = document.getElementById("submitButton");
+
+if (form && button) {
+  form.addEventListener("submit", () => {
+    button.disabled = true;
+    button.textContent = "Analyzing...";
+  });
+}
+</script>
+</body>
+</html>
